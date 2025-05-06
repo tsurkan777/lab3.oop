@@ -1,261 +1,210 @@
 #include <iostream>
-#include <cstdlib>
+
 using namespace std;
 
 class Vector {
 private:
     short* data;
     int size;
-    int state;
-    static int count;
+    int state; // 0 - ок, 1 - помилка пам’яті, 2 - вихід за межі
+    static int objectCount;
 
 public:
-    // Конструктор без параметрів
+    // --- Конструктори ---
     Vector() {
-        data = new short[1];
-        if (data == nullptr) {
+        size = 1;
+        data = new(nothrow) short[size];
+        if (!data) {
             state = 1;
         } else {
             data[0] = 0;
-            size = 1;
             state = 0;
         }
-        count++;
+        objectCount++;
     }
 
-    // Конструктор з одним параметром
-    Vector(int n) {
-        data = new short[n];
-        if (data == nullptr) {
+    Vector(int s) {
+        size = s;
+        data = new(nothrow) short[size];
+        if (!data) {
             state = 1;
         } else {
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < size; ++i)
                 data[i] = 0;
-            }
-            size = n;
             state = 0;
         }
-        count++;
+        objectCount++;
     }
 
-    // Конструктор з двома параметрами
-    Vector(int n, short value) {
-        data = new short[n];
-        if (data == nullptr) {
+    Vector(int s, short value) {
+        size = s;
+        data = new(nothrow) short[size];
+        if (!data) {
             state = 1;
         } else {
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < size; ++i)
                 data[i] = value;
-            }
-            size = n;
             state = 0;
         }
-        count++;
+        objectCount++;
     }
 
-    // Конструктор копіювання
+    // --- Конструктор копій ---
     Vector(const Vector& other) {
-        data = new short[other.size];
-        if (data == nullptr) {
+        size = other.size;
+        data = new(nothrow) short[size];
+        if (!data) {
             state = 1;
         } else {
-            for (int i = 0; i < other.size; i++) {
+            for (int i = 0; i < size; ++i)
                 data[i] = other.data[i];
-            }
-            size = other.size;
             state = other.state;
         }
-        count++;
+        objectCount++;
     }
 
-    // Оператор присвоєння
+    // --- Оператор присвоєння ---
     Vector& operator=(const Vector& other) {
         if (this != &other) {
             delete[] data;
-            data = new short[other.size];
-            if (data == nullptr) {
+            size = other.size;
+            data = new(nothrow) short[size];
+            if (!data) {
                 state = 1;
             } else {
-                for (int i = 0; i < other.size; i++) {
+                for (int i = 0; i < size; ++i)
                     data[i] = other.data[i];
-                }
-                size = other.size;
                 state = other.state;
             }
         }
         return *this;
     }
 
-    // Деструктор
+    // --- Деструктор ---
     ~Vector() {
         delete[] data;
-        count--;
+        objectCount--;
     }
 
-    // Функція присвоєння значення елементу
+    // --- Присвоєння елементу ---
     void set(int index, short value = 0) {
-        if (index >= 0 && index < size) {
+        if (index < 0 || index >= size) {
+            state = 2;
+        } else {
             data[index] = value;
             state = 0;
-        } else {
-            state = 2;
         }
     }
 
-    // Функція отримання елементу
+    // --- Отримання елементу ---
     short get(int index) {
-        if (index >= 0 && index < size) {
-            return data[index];
-        } else {
+        if (index < 0 || index >= size) {
             state = 2;
             return 0;
         }
+        state = 0;
+        return data[index];
     }
 
-    // Функція друку
-    void print() {
-        for (int i = 0; i < size; i++) {
+    // --- Друк ---
+    void print() const {
+        cout << "Vector: ";
+        for (int i = 0; i < size; ++i)
             cout << data[i] << " ";
-        }
-        cout << endl;
+        cout << "| Size: " << size << " | State: " << state << endl;
     }
 
-    // Функція додавання
-    Vector add(Vector& other) {
-        int minSize;
-        if (size < other.size) {
-            minSize = size;
-        } else {
-            minSize = other.size;
-        }
-
+    // --- Арифметика ---
+    Vector add(const Vector& other) const {
+        int minSize = (size < other.size) ? size : other.size;
         Vector result(minSize);
-        for (int i = 0; i < minSize; i++) {
-            result.data[i] = data[i] + other.data[i];
-        }
+        for (int i = 0; i < minSize; ++i)
+            result.data[i] = this->data[i] + other.data[i];
         return result;
     }
 
-    // Функція віднімання
-    Vector subtract(Vector& other) {
-        int minSize;
-        if (size < other.size) {
-            minSize = size;
-        } else {
-            minSize = other.size;
-        }
-
+    Vector subtract(const Vector& other) const {
+        int minSize = (size < other.size) ? size : other.size;
         Vector result(minSize);
-        for (int i = 0; i < minSize; i++) {
-            result.data[i] = data[i] - other.data[i];
-        }
+        for (int i = 0; i < minSize; ++i)
+            result.data[i] = this->data[i] - other.data[i];
         return result;
     }
 
-    // Функція множення на число
-    void multiply(unsigned char num) {
-        for (int i = 0; i < size; i++) {
-            data[i] = data[i] * num;
-        }
+    Vector multiply(unsigned char multiplier) const {
+        Vector result(size);
+        for (int i = 0; i < size; ++i)
+            result.data[i] = data[i] * multiplier;
+        return result;
     }
 
-    // Функція порівняння більше
-    bool isGreater(Vector& other) {
-        int minSize;
-        if (size < other.size) {
-            minSize = size;
-        } else {
-            minSize = other.size;
-        }
-
-        for (int i = 0; i < minSize; i++) {
-            if (data[i] <= other.data[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Функція рівності
-    bool isEqual(Vector& other) {
-        if (size != other.size) {
+    // --- Порівняння ---
+    bool isEqual(const Vector& other) const {
+        if (size != other.size)
             return false;
-        }
-
-        for (int i = 0; i < size; i++) {
-            if (data[i] != other.data[i]) {
+        for (int i = 0; i < size; ++i)
+            if (data[i] != other.data[i])
                 return false;
-            }
-        }
-
         return true;
     }
 
-    // Функція нерівності
-    bool isNotEqual(Vector& other) {
+    bool isNotEqual(const Vector& other) const {
         return !isEqual(other);
     }
 
-    // Функція отримання стану
-    int getState() {
-        return state;
+    bool isGreaterThan(const Vector& other) const {
+        int minSize = (size < other.size) ? size : other.size;
+        for (int i = 0; i < minSize; ++i) {
+            if (data[i] > other.data[i])
+                return true;
+            else if (data[i] < other.data[i])
+                return false;
+        }
+        return size > other.size;
     }
 
-    // Функція отримання розміру
-    int getSize() {
-        return size;
-    }
-
-    // Функція кількості об'єктів
-    static int getCount() {
-        return count;
-    }
+    // --- Додаткове ---
+    int getState() const { return state; }
+    static int getObjectCount() { return objectCount; }
 };
 
-int Vector::count = 0;
+int Vector::objectCount = 0;
 
-// Тестування
+// --- main() ---
 int main() {
     system("chcp 65001");
+    cout << "Кількість об'єктів: " << Vector::getObjectCount() << endl;
+
     Vector v1;
-    v1.print();
-
     Vector v2(5);
-    v2.print();
-
     Vector v3(5, 7);
-    v3.print();
 
-    v3.set(2, 99);
-    cout << "Елемент 2: " << v3.get(2) << endl;
+    v1.print();
+    v2.print();
     v3.print();
 
     Vector v4 = v3;
     v4.print();
 
-    v4.multiply(2);
-    v4.print();
+    v2.set(2, 99);
+    v2.set(10, 5); // помилка
+    cout << "Елемент [2] = " << v2.get(2) << ", Елемент [10] = " << v2.get(10) << endl;
+    v2.print();
 
-    Vector v5 = v3.add(v4);
-    v5.print();
+    Vector sum = v2.add(v3);
+    Vector diff = v3.subtract(v2);
+    Vector mult = v3.multiply(2);
 
-    Vector v6 = v4.subtract(v3);
-    v6.print();
+    cout << "Сума:\n"; sum.print();
+    cout << "Різниця:\n"; diff.print();
+    cout << "Множення:\n"; mult.print();
 
-    cout << "Кількість об'єктів: " << Vector::getCount() << endl;
+    cout << "v2 == v3 " << (v2.isEqual(v3) ? "Так" : "Ні") << endl;
+    cout << "v2 != v3 " << (v2.isNotEqual(v3) ? "Так" : "Ні") << endl;
+    cout << "v3 > v2 " << (v3.isGreaterThan(v2) ? "Так" : "Ні") << endl;
 
-    if (v3.isEqual(v4)) {
-        cout << "Вектори рівні" << endl;
-    } else {
-        cout << "Вектори НЕ рівні" << endl;
-    }
-
-    if (v4.isGreater(v3)) {
-        cout << "v4 більше за v3" << endl;
-    } else {
-        cout << "v4 не більше за v3" << endl;
-    }
-
+    cout << "Кількість об'єктів: " << Vector::getObjectCount() << endl;
     return 0;
 }
+
 
