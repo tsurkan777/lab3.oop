@@ -1,261 +1,115 @@
 #include <iostream>
-#include <cstdlib>
+
+#include <string>
+
 using namespace std;
 
-class Vector {
+class Parallelogram {
 private:
-    short* data;
-    int size;
-    int state;
-    static int count;
+    double base;
+    double height;
+    double side;
+    string color;
 
 public:
-    // Конструктор без параметрів
-    Vector() {
-        data = new short[1];
-        if (data == nullptr) {
-            state = 1;
-        } else {
-            data[0] = 0;
-            size = 1;
-            state = 0;
-        }
-        count++;
+    // Конструктор за замовчуванням
+    Parallelogram() {
+        base = 1.0;
+        height = 1.0;
+        side = 1.0;
+        color = "білий";
     }
 
-    // Конструктор з одним параметром
-    Vector(int n) {
-        data = new short[n];
-        if (data == nullptr) {
-            state = 1;
-        } else {
-            for (int i = 0; i < n; i++) {
-                data[i] = 0;
-            }
-            size = n;
-            state = 0;
-        }
-        count++;
+    // Конструктор із параметрами
+    Parallelogram(double b, double h, double s, string c) {
+        setBase(b);
+        setHeight(h);
+        setSide(s);
+        setColor(c);
     }
 
-    // Конструктор з двома параметрами
-    Vector(int n, short value) {
-        data = new short[n];
-        if (data == nullptr) {
-            state = 1;
-        } else {
-            for (int i = 0; i < n; i++) {
-                data[i] = value;
-            }
-            size = n;
-            state = 0;
-        }
-        count++;
+    // Сетери з перевіркою
+    void setBase(double b) {
+        if (b > 0)
+            base = b;
+        else
+            cout << "Помилка: основа повинна бути додатною." << endl;
     }
 
-    // Конструктор копіювання
-    Vector(const Vector& other) {
-        data = new short[other.size];
-        if (data == nullptr) {
-            state = 1;
-        } else {
-            for (int i = 0; i < other.size; i++) {
-                data[i] = other.data[i];
-            }
-            size = other.size;
-            state = other.state;
-        }
-        count++;
+    void setHeight(double h) {
+        if (h > 0)
+            height = h;
+        else
+            cout << "Помилка: висота повинна бути додатною." << endl;
     }
 
-    // Оператор присвоєння
-    Vector& operator=(const Vector& other) {
-        if (this != &other) {
-            delete[] data;
-            data = new short[other.size];
-            if (data == nullptr) {
-                state = 1;
-            } else {
-                for (int i = 0; i < other.size; i++) {
-                    data[i] = other.data[i];
-                }
-                size = other.size;
-                state = other.state;
-            }
-        }
-        return *this;
+    void setSide(double s) {
+        if (s > 0)
+            side = s;
+        else
+            cout << "Помилка: бічна сторона повинна бути додатною." << endl;
     }
 
-    // Деструктор
-    ~Vector() {
-        delete[] data;
-        count--;
+    void setColor(string c) {
+        if (!c.empty())
+            color = c;
+        else
+            cout << "Помилка: колір не може бути порожнім." << endl;
     }
 
-    // Функція присвоєння значення елементу
-    void set(int index, short value = 0) {
-        if (index >= 0 && index < size) {
-            data[index] = value;
-            state = 0;
-        } else {
-            state = 2;
-        }
+    // Геттери
+    double getBase() const { return base; }
+    double getHeight() const { return height; }
+    double getSide() const { return side; }
+    string getColor() const { return color; }
+
+    double area() const {
+        return base * height;
     }
 
-    // Функція отримання елементу
-    short get(int index) {
-        if (index >= 0 && index < size) {
-            return data[index];
-        } else {
-            state = 2;
-            return 0;
-        }
+    double perimeter() const {
+        return 2 * (base + side);
     }
 
-    // Функція друку
-    void print() {
-        for (int i = 0; i < size; i++) {
-            cout << data[i] << " ";
-        }
-        cout << endl;
-    }
-
-    // Функція додавання
-    Vector add(Vector& other) {
-        int minSize;
-        if (size < other.size) {
-            minSize = size;
-        } else {
-            minSize = other.size;
-        }
-
-        Vector result(minSize);
-        for (int i = 0; i < minSize; i++) {
-            result.data[i] = data[i] + other.data[i];
-        }
-        return result;
-    }
-
-    // Функція віднімання
-    Vector subtract(Vector& other) {
-        int minSize;
-        if (size < other.size) {
-            minSize = size;
-        } else {
-            minSize = other.size;
-        }
-
-        Vector result(minSize);
-        for (int i = 0; i < minSize; i++) {
-            result.data[i] = data[i] - other.data[i];
-        }
-        return result;
-    }
-
-    // Функція множення на число
-    void multiply(unsigned char num) {
-        for (int i = 0; i < size; i++) {
-            data[i] = data[i] * num;
-        }
-    }
-
-    // Функція порівняння більше
-    bool isGreater(Vector& other) {
-        int minSize;
-        if (size < other.size) {
-            minSize = size;
-        } else {
-            minSize = other.size;
-        }
-
-        for (int i = 0; i < minSize; i++) {
-            if (data[i] <= other.data[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Функція рівності
-    bool isEqual(Vector& other) {
-        if (size != other.size) {
-            return false;
-        }
-
-        for (int i = 0; i < size; i++) {
-            if (data[i] != other.data[i]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // Функція нерівності
-    bool isNotEqual(Vector& other) {
-        return !isEqual(other);
-    }
-
-    // Функція отримання стану
-    int getState() {
-        return state;
-    }
-
-    // Функція отримання розміру
-    int getSize() {
-        return size;
-    }
-
-    // Функція кількості об'єктів
-    static int getCount() {
-        return count;
+    void print() const {
+        cout << "Паралелограм: "
+             << "\n  Основа: " << base
+             << "\n  Висота: " << height
+             << "\n  Бічна сторона: " << side
+             << "\n  Колір: " << color
+             << "\n  Площа: " << area()
+             << "\n  Периметр: " << perimeter()
+             << endl;
     }
 };
 
-int Vector::count = 0;
 
-// Тестування
 int main() {
     system("chcp 65001");
-    Vector v1;
-    v1.print();
+    // Тест конструктора за замовчуванням
+    Parallelogram p1;
+    cout << "Тест конструктора за замовчуванням:" << endl;
+    p1.print();
 
-    Vector v2(5);
-    v2.print();
+    // Тест конструктора з параметрами
+    Parallelogram p2(5.0, 3.0, 4.0, "синій");
+    cout << "\nТест конструктора з параметрами:" << endl;
+    p2.print();
 
-    Vector v3(5, 7);
-    v3.print();
+    // Тест геттерів і сеттерів
+    cout << "\nЗміна параметрів об'єкта p1:" << endl;
+    p1.setBase(6.0);
+    p1.setHeight(4.0);
+    p1.setSide(5.0);
+    p1.setColor("зелений");
+    p1.print();
 
-    v3.set(2, 99);
-    cout << "Елемент 2: " << v3.get(2) << endl;
-    v3.print();
-
-    Vector v4 = v3;
-    v4.print();
-
-    v4.multiply(2);
-    v4.print();
-
-    Vector v5 = v3.add(v4);
-    v5.print();
-
-    Vector v6 = v4.subtract(v3);
-    v6.print();
-
-    cout << "Кількість об'єктів: " << Vector::getCount() << endl;
-
-    if (v3.isEqual(v4)) {
-        cout << "Вектори рівні" << endl;
-    } else {
-        cout << "Вектори НЕ рівні" << endl;
-    }
-
-    if (v4.isGreater(v3)) {
-        cout << "v4 більше за v3" << endl;
-    } else {
-        cout << "v4 не більше за v3" << endl;
-    }
+    // Тест некоректних значень
+    cout << "\nСпроба встановити некоректні значення:" << endl;
+    p1.setBase(-2.0);
+    p1.setHeight(0.0);
+    p1.setSide(-1.0);
+    p1.setColor("");
 
     return 0;
 }
-
